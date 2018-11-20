@@ -27,6 +27,17 @@ func TestTree(t *testing.T) {
 		out  output
 	}{
 		{
+			"success: default",
+			input{
+				testConfig,
+				nil,
+			},
+			output{
+				"1223349a40d2ee10bd1bebb5889ef8018c8bc13359ed94b387810af96c6e4268",
+				nil,
+			},
+		},
+		{
 			"success",
 			input{
 				testConfig,
