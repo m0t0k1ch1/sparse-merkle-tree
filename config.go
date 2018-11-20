@@ -1,17 +1,17 @@
 package merkle
 
-import "hash"
+import (
+	"hash"
+)
 
 type Config struct {
-	hasher   hash.Hash
-	depth    uint64
-	hashSize uint64
+	hasher hash.Hash
+	depth  uint64
 }
 
-func NewConfig(hasher hash.Hash, depth uint64, hashSize uint64) *Config {
+func NewConfig(hasher hash.Hash, depth uint64) *Config {
 	return &Config{
-		hasher:   hasher,
-		depth:    depth,
-		hashSize: hashSize,
+		hasher: hasher,
+		depth:  depth,
 	}
 }

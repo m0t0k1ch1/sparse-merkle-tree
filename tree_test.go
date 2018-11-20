@@ -7,9 +7,8 @@ import (
 )
 
 var testConfig = &Config{
-	hasher:   sha256.New(),
-	depth:    2,
-	hashSize: 32,
+	hasher: sha256.New(),
+	depth:  2,
 }
 
 func TestTree(t *testing.T) {

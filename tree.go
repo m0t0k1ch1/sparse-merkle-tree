@@ -1,5 +1,7 @@
 package merkle
 
+import "bytes"
+
 type Tree struct {
 	config       *Config
 	defaultNodes [][]byte
@@ -30,7 +32,7 @@ func NewTree(conf *Config, leaves map[uint64][]byte) (*Tree, error) {
 func (tree *Tree) buildDefaultNodes() error {
 	conf := tree.config
 
-	node, err := tree.hash(make([]byte, conf.hashSize, conf.hashSize))
+	node, err := tree.hash(bytes.Repeat([]byte{0x00}, conf.hasher.Size()))
 	if err != nil {
 		return err
 	}
