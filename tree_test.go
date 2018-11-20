@@ -3,17 +3,14 @@ package merkle
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"hash"
 	"testing"
 )
 
-var testConfig = &Config{
-	hasher: sha256.New(),
-	depth:  2,
-}
-
 func TestTree(t *testing.T) {
 	type input struct {
-		config *Config
+		hasher hash.Hash
+		depth  uint64
 		leaves map[uint64][]byte
 	}
 	type output struct {
@@ -28,7 +25,8 @@ func TestTree(t *testing.T) {
 		{
 			"success: default",
 			input{
-				testConfig,
+				sha256.New(),
+				2,
 				nil,
 			},
 			output{
@@ -39,7 +37,8 @@ func TestTree(t *testing.T) {
 		{
 			"success",
 			input{
-				testConfig,
+				sha256.New(),
+				2,
 				map[uint64][]byte{
 					0: []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 					3: []byte{0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03},
@@ -56,7 +55,7 @@ func TestTree(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			in, out := tc.in, tc.out
 
-			tree, err := NewTree(in.config, in.leaves)
+			tree, err := NewTree(in.hasher, in.depth, in.leaves)
 			if err != out.err {
 				t.Errorf("expected: %v, actual: %v", out.err, err)
 			}

@@ -1,18 +1,23 @@
 package merkle
 
-import "bytes"
+import (
+	"bytes"
+	"hash"
+)
 
 type Tree struct {
-	config       *Config
+	hasher       hash.Hash
+	depth        uint64
 	defaultNodes [][]byte
 	levels       []map[uint64][]byte
 }
 
-func NewTree(conf *Config, leaves map[uint64][]byte) (*Tree, error) {
+func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, error) {
 	tree := &Tree{
-		config:       conf,
-		defaultNodes: make([][]byte, conf.depth+1),
-		levels:       make([]map[uint64][]byte, conf.depth+1),
+		hasher:       hasher,
+		depth:        depth,
+		defaultNodes: make([][]byte, depth+1),
+		levels:       make([]map[uint64][]byte, depth+1),
 	}
 
 	for i, _ := range tree.levels {
@@ -30,15 +35,13 @@ func NewTree(conf *Config, leaves map[uint64][]byte) (*Tree, error) {
 }
 
 func (tree *Tree) buildDefaultNodes() error {
-	conf := tree.config
-
-	node, err := tree.hash(bytes.Repeat([]byte{0x00}, conf.hasher.Size()))
+	node, err := tree.hash(bytes.Repeat([]byte{0x00}, tree.hasher.Size()))
 	if err != nil {
 		return err
 	}
-	tree.defaultNodes[conf.depth] = node
+	tree.defaultNodes[tree.depth] = node
 
-	for d := conf.depth; d > 0; d-- {
+	for d := tree.depth; d > 0; d-- {
 		node, err := tree.pairHash(tree.defaultNodes[d], tree.defaultNodes[d])
 		if err != nil {
 			return err
@@ -50,17 +53,15 @@ func (tree *Tree) buildDefaultNodes() error {
 }
 
 func (tree *Tree) build(leaves map[uint64][]byte) error {
-	conf := tree.config
-
 	for index, leaf := range leaves {
 		node, err := tree.hash(leaf)
 		if err != nil {
 			return err
 		}
-		tree.levels[conf.depth][index] = node
+		tree.levels[tree.depth][index] = node
 	}
 
-	for d := conf.depth; d > 0; d-- {
+	for d := tree.depth; d > 0; d-- {
 		level := tree.levels[d]
 
 		for index, node := range level {
@@ -91,24 +92,22 @@ func (tree *Tree) build(leaves map[uint64][]byte) error {
 }
 
 func (tree *Tree) hash(b []byte) ([]byte, error) {
-	hasher := tree.config.hasher
-	hasher.Reset()
-	if _, err := hasher.Write(b); err != nil {
+	tree.hasher.Reset()
+	if _, err := tree.hasher.Write(b); err != nil {
 		return nil, err
 	}
-	return hasher.Sum(nil), nil
+	return tree.hasher.Sum(nil), nil
 }
 
 func (tree *Tree) pairHash(b1, b2 []byte) ([]byte, error) {
-	hasher := tree.config.hasher
-	hasher.Reset()
-	if _, err := hasher.Write(b1); err != nil {
+	tree.hasher.Reset()
+	if _, err := tree.hasher.Write(b1); err != nil {
 		return nil, err
 	}
-	if _, err := hasher.Write(b2); err != nil {
+	if _, err := tree.hasher.Write(b2); err != nil {
 		return nil, err
 	}
-	return hasher.Sum(nil), nil
+	return tree.hasher.Sum(nil), nil
 }
 
 func (tree *Tree) Root() []byte {
