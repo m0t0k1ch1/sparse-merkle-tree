@@ -50,7 +50,7 @@ func TestTree(t *testing.T) {
 			},
 		},
 		{
-			"failure: too large depth",
+			"failure: too large tree depth",
 			input{
 				sha256.New(),
 				65,
@@ -58,7 +58,21 @@ func TestTree(t *testing.T) {
 			},
 			output{
 				"",
-				ErrTooLargeDepth,
+				ErrTooLargeTreeDepth,
+			},
+		},
+		{
+			"failure: too large leaf index",
+			input{
+				sha256.New(),
+				2,
+				map[uint64][]byte{
+					5: nil,
+				},
+			},
+			output{
+				"",
+				ErrTooLargeLeafIndex,
 			},
 		},
 	}

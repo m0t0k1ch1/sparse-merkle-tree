@@ -2,8 +2,9 @@ package merkle
 
 import (
 	"bytes"
-	"fmt"
+	"errors"
 	"hash"
+	"math/big"
 )
 
 const (
@@ -11,7 +12,8 @@ const (
 )
 
 var (
-	ErrTooLargeDepth = fmt.Errorf("depth must be %d or less", DepthMax)
+	ErrTooLargeTreeDepth = errors.New("too large tree depth")
+	ErrTooLargeLeafIndex = errors.New("too large leaf index")
 )
 
 type Tree struct {
@@ -22,8 +24,8 @@ type Tree struct {
 }
 
 func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, error) {
-	if depth > DepthMax {
-		return nil, ErrTooLargeDepth
+	if err := validateTreeArgs(depth, leaves); err != nil {
+		return nil, err
 	}
 
 	tree := &Tree{
@@ -32,7 +34,6 @@ func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, e
 		defaultNodes: make([][]byte, depth+1),
 		levels:       make([]map[uint64][]byte, depth+1),
 	}
-
 	for i, _ := range tree.levels {
 		tree.levels[i] = map[uint64][]byte{}
 	}
@@ -45,6 +46,24 @@ func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, e
 	}
 
 	return tree, nil
+}
+
+func validateTreeArgs(depth uint64, leaves map[uint64][]byte) error {
+	if depth > DepthMax {
+		return ErrTooLargeTreeDepth
+	}
+
+	indexMax := uint64(0)
+	for index, _ := range leaves {
+		if index > indexMax {
+			indexMax = index
+		}
+	}
+	if new(big.Int).SetUint64(indexMax).Cmp(new(big.Int).Exp(big.NewInt(2), new(big.Int).SetUint64(depth), nil)) > 0 {
+		return ErrTooLargeLeafIndex
+	}
+
+	return nil
 }
 
 func (tree *Tree) buildDefaultNodes() error {
