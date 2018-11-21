@@ -19,18 +19,25 @@ var (
 type Tree struct {
 	hasher       hash.Hash
 	depth        uint64
+	indexMax     uint64
 	defaultNodes [][]byte
 	levels       []map[uint64][]byte
 }
 
 func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, error) {
-	if err := validateTreeArgs(depth, leaves); err != nil {
-		return nil, err
+	if depth > DepthMax {
+		return nil, ErrTooLargeTreeDepth
+	}
+
+	indexMax := new(big.Int).Lsh(big.NewInt(2), uint(depth-1)).Uint64() - 1
+	if maxIndex(leaves) > indexMax {
+		return nil, ErrTooLargeLeafIndex
 	}
 
 	tree := &Tree{
 		hasher:       hasher,
 		depth:        depth,
+		indexMax:     indexMax,
 		defaultNodes: make([][]byte, depth+1),
 		levels:       make([]map[uint64][]byte, depth+1),
 	}
@@ -46,24 +53,6 @@ func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, e
 	}
 
 	return tree, nil
-}
-
-func validateTreeArgs(depth uint64, leaves map[uint64][]byte) error {
-	if depth > DepthMax {
-		return ErrTooLargeTreeDepth
-	}
-
-	indexMax := uint64(0)
-	for index, _ := range leaves {
-		if index > indexMax {
-			indexMax = index
-		}
-	}
-	if new(big.Int).SetUint64(indexMax).Cmp(new(big.Int).Exp(big.NewInt(2), new(big.Int).SetUint64(depth), nil)) > 0 {
-		return ErrTooLargeLeafIndex
-	}
-
-	return nil
 }
 
 func (tree *Tree) buildDefaultNodes() error {

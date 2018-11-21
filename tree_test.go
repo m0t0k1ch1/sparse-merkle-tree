@@ -67,7 +67,7 @@ func TestTree(t *testing.T) {
 				sha256.New(),
 				2,
 				map[uint64][]byte{
-					5: nil,
+					4: nil,
 				},
 			},
 			output{
