@@ -49,9 +49,9 @@ func TestTree(t *testing.T) {
 			"failure: too large leaf index",
 			input{
 				sha256.New(),
-				2,
+				3,
 				map[uint64][]byte{
-					4: nil,
+					8: nil,
 				},
 			},
 			output{
@@ -63,11 +63,11 @@ func TestTree(t *testing.T) {
 			"success: default",
 			input{
 				sha256.New(),
-				2,
+				3,
 				nil,
 			},
 			output{
-				"1223349a40d2ee10bd1bebb5889ef8018c8bc13359ed94b387810af96c6e4268",
+				"5b82b695a7ac2668e188b75f7d4fa79faa504117d1fdfcbe8a46915c1a8a5191",
 				nil,
 			},
 		},
@@ -75,14 +75,14 @@ func TestTree(t *testing.T) {
 			"success",
 			input{
 				sha256.New(),
-				2,
+				3,
 				map[uint64][]byte{
 					0: []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 					3: []byte{0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03, 0x03},
 				},
 			},
 			output{
-				"63b837bc262a357e26206290926736b07ad45ddc1e15b5a7e0092b708c093104",
+				"096222fdaf653d68d1c7e4d90d91c253444e18eb9ab4be4940dd1ea2f0eb8d22",
 				nil,
 			},
 		},
@@ -135,10 +135,10 @@ func TestTree_CreateMembershipProof(t *testing.T) {
 			"success: inclusion",
 			newTestTree(t),
 			input{
-				0,
+				3,
 			},
 			output{
-				"00000000000000021b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+				"0000000000000002de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
 				nil,
 			},
 		},
@@ -224,8 +224,8 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			"failure: invalid proof head",
 			newTestTree(t),
 			input{
-				0,
-				"00000000000000011b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+				3,
+				"0000000000000001de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
 			},
 			output{
 				false,
@@ -236,8 +236,8 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			"failure: invalid proof",
 			newTestTree(t),
 			input{
-				0,
-				"00000000000000021b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa163",
+				3,
+				"0000000000000002de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cde",
 			},
 			output{
 				false,
@@ -248,8 +248,8 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			"success",
 			newTestTree(t),
 			input{
-				0,
-				"00000000000000021b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+				3,
+				"0000000000000002de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
 			},
 			output{
 				true,
