@@ -2,7 +2,16 @@ package merkle
 
 import (
 	"bytes"
+	"fmt"
 	"hash"
+)
+
+const (
+	DepthMax = 64
+)
+
+var (
+	ErrTooLargeDepth = fmt.Errorf("depth must be %d or less", DepthMax)
 )
 
 type Tree struct {
@@ -13,6 +22,10 @@ type Tree struct {
 }
 
 func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, error) {
+	if depth > DepthMax {
+		return nil, ErrTooLargeDepth
+	}
+
 	tree := &Tree{
 		hasher:       hasher,
 		depth:        depth,

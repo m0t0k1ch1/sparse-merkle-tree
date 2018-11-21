@@ -49,6 +49,18 @@ func TestTree(t *testing.T) {
 				nil,
 			},
 		},
+		{
+			"failure: too large depth",
+			input{
+				sha256.New(),
+				65,
+				nil,
+			},
+			output{
+				"",
+				ErrTooLargeDepth,
+			},
+		},
 	}
 
 	for _, tc := range testCases {
