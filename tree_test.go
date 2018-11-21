@@ -138,7 +138,8 @@ func TestTree_CreateMembershipProof(t *testing.T) {
 				3,
 			},
 			output{
-				"0000000000000002de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
+				"0000000000000002" +
+					"de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
 				nil,
 			},
 		},
@@ -149,7 +150,9 @@ func TestTree_CreateMembershipProof(t *testing.T) {
 				1,
 			},
 			output{
-				"0000000000000003af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc1b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+				"0000000000000003" +
+					"af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc" +
+					"1b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
 				nil,
 			},
 		},
@@ -236,7 +239,8 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			newTestTree(t),
 			input{
 				3,
-				"0000000000000001de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
+				"0000000000000001" +
+					"de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
 			},
 			output{
 				false,
@@ -248,7 +252,8 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			newTestTree(t),
 			input{
 				3,
-				"0000000000000002de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cde",
+				"0000000000000002" +
+					"de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cde",
 			},
 			output{
 				false,
@@ -260,7 +265,8 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			newTestTree(t),
 			input{
 				3,
-				"0000000000000002de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
+				"0000000000000002" +
+					"de1c789a456bfc1c1aac18062f751ebc10dc3b358bdfe2f47c8fc76a84ec8cdf",
 			},
 			output{
 				true,
@@ -272,7 +278,9 @@ func TestTree_VerifyMembershipProof(t *testing.T) {
 			newTestTree(t),
 			input{
 				1,
-				"0000000000000003af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc1b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+				"0000000000000003" +
+					"af5570f5a1810b7af78caf4bc70a660f0df51e42baf91d4de5b2328de0e83dfc" +
+					"1b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
 			},
 			output{
 				true,
