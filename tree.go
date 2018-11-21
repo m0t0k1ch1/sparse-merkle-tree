@@ -9,7 +9,11 @@ import (
 )
 
 const (
-	DepthMax = 64
+	DepthMax uint64 = 64
+)
+
+var (
+	proofHeadSize = DepthMax / 8
 )
 
 var (
@@ -21,6 +25,7 @@ var (
 
 type Tree struct {
 	hasher       hash.Hash
+	hashSize     uint64
 	depth        uint64
 	indexMax     uint64
 	defaultNodes [][]byte
@@ -39,6 +44,7 @@ func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, e
 
 	tree := &Tree{
 		hasher:       hasher,
+		hashSize:     uint64(hasher.Size()),
 		depth:        depth,
 		indexMax:     indexMax,
 		defaultNodes: make([][]byte, depth+1),
@@ -58,8 +64,27 @@ func NewTree(hasher hash.Hash, depth uint64, leaves map[uint64][]byte) (*Tree, e
 	return tree, nil
 }
 
+func (tree *Tree) hash(b []byte) ([]byte, error) {
+	tree.hasher.Reset()
+	if _, err := tree.hasher.Write(b); err != nil {
+		return nil, err
+	}
+	return tree.hasher.Sum(nil), nil
+}
+
+func (tree *Tree) pairHash(b1, b2 []byte) ([]byte, error) {
+	tree.hasher.Reset()
+	if _, err := tree.hasher.Write(b1); err != nil {
+		return nil, err
+	}
+	if _, err := tree.hasher.Write(b2); err != nil {
+		return nil, err
+	}
+	return tree.hasher.Sum(nil), nil
+}
+
 func (tree *Tree) buildDefaultNodes() error {
-	node, err := tree.hash(bytes.Repeat([]byte{0x00}, tree.hasher.Size()))
+	node, err := tree.hash(make([]byte, tree.hashSize, tree.hashSize))
 	if err != nil {
 		return err
 	}
@@ -116,25 +141,6 @@ func (tree *Tree) build(leaves map[uint64][]byte) error {
 	return nil
 }
 
-func (tree *Tree) hash(b []byte) ([]byte, error) {
-	tree.hasher.Reset()
-	if _, err := tree.hasher.Write(b); err != nil {
-		return nil, err
-	}
-	return tree.hasher.Sum(nil), nil
-}
-
-func (tree *Tree) pairHash(b1, b2 []byte) ([]byte, error) {
-	tree.hasher.Reset()
-	if _, err := tree.hasher.Write(b1); err != nil {
-		return nil, err
-	}
-	if _, err := tree.hasher.Write(b2); err != nil {
-		return nil, err
-	}
-	return tree.hasher.Sum(nil), nil
-}
-
 func (tree *Tree) Root() []byte {
 	if root, ok := tree.levels[0][0]; ok {
 		return root
@@ -149,7 +155,7 @@ func (tree *Tree) CreateMembershipProof(index uint64) ([]byte, error) {
 
 	var proofHead uint64
 
-	proofHeadBytes := make([]byte, DepthMax/8)
+	proofHeadBytes := make([]byte, proofHeadSize)
 	buf := bytes.NewBuffer(proofHeadBytes)
 
 	for d := tree.depth; d > 0; d-- {
@@ -173,7 +179,7 @@ func (tree *Tree) CreateMembershipProof(index uint64) ([]byte, error) {
 	binary.BigEndian.PutUint64(proofHeadBytes, proofHead)
 
 	proof := buf.Bytes()
-	copy(proof[:DepthMax/8], proofHeadBytes)
+	copy(proof[:proofHeadSize], proofHeadBytes)
 
 	return proof, nil
 }
@@ -182,14 +188,14 @@ func (tree *Tree) VerifyMembershipProof(index uint64, proof []byte) (bool, error
 	if index > tree.indexMax {
 		return false, ErrTooLargeLeafIndex
 	}
-	if (len(proof)-DepthMax/8)%tree.hasher.Size() != 0 {
+	if (uint64(len(proof))-proofHeadSize)%tree.hashSize != 0 {
 		return false, ErrInvalidProofSize
 	}
-	if uint64(len(proof)) > uint64(tree.hasher.Size())*tree.depth+DepthMax/8 {
+	if uint64(len(proof)) > tree.hashSize*tree.depth+proofHeadSize {
 		return false, ErrTooLargeProofSize
 	}
 
-	proofIndex := DepthMax / 8
+	proofIndex := proofHeadSize
 	proofHead := binary.BigEndian.Uint64(proof[:proofIndex])
 
 	b, ok := tree.levels[tree.depth][index]
@@ -202,8 +208,8 @@ func (tree *Tree) VerifyMembershipProof(index uint64, proof []byte) (bool, error
 		if proofHead&1 == 0 {
 			siblingNode = tree.defaultNodes[d]
 		} else {
-			siblingNode = proof[proofIndex : proofIndex+tree.hasher.Size()]
-			proofIndex += tree.hasher.Size()
+			siblingNode = proof[proofIndex : proofIndex+tree.hashSize]
+			proofIndex += tree.hashSize
 		}
 
 		var err error
