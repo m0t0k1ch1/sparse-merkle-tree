@@ -161,3 +161,120 @@ func TestTree_CreateMembershipProof(t *testing.T) {
 		})
 	}
 }
+
+func TestTree_VerifyMembershipProof(t *testing.T) {
+	type input struct {
+		index    uint64
+		proofHex string
+	}
+	type output struct {
+		ok  bool
+		err error
+	}
+	testCases := []struct {
+		name string
+		tree *Tree
+		in   input
+		out  output
+	}{
+		{
+			"failure: too large leaf index",
+			newTestTree(t),
+			input{
+				8,
+				"",
+			},
+			output{
+				false,
+				ErrTooLargeLeafIndex,
+			},
+		},
+		{
+			"failure: too large proof size",
+			newTestTree(t),
+			input{
+				0,
+				"0000000000000000" +
+					"0000000000000000000000000000000000000000000000000000000000000000" +
+					"0000000000000000000000000000000000000000000000000000000000000000" +
+					"0000000000000000000000000000000000000000000000000000000000000000" +
+					"00",
+			},
+			output{
+				false,
+				ErrTooLargeProofSize,
+			},
+		},
+		{
+			"failure: invalid proof size",
+			newTestTree(t),
+			input{
+				0,
+				"0000000000000000" +
+					"0000000000000000000000000000000000000000000000000000000000000000" +
+					"0000000000000000000000000000000000000000000000000000000000000000" +
+					"00000000000000000000000000000000000000000000000000000000000000",
+			},
+			output{
+				false,
+				ErrInvalidProofSize,
+			},
+		},
+		{
+			"failure: invalid proof head",
+			newTestTree(t),
+			input{
+				0,
+				"00000000000000011b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+			},
+			output{
+				false,
+				nil,
+			},
+		},
+		{
+			"failure: invalid proof",
+			newTestTree(t),
+			input{
+				0,
+				"00000000000000021b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa163",
+			},
+			output{
+				false,
+				nil,
+			},
+		},
+		{
+			"success",
+			newTestTree(t),
+			input{
+				0,
+				"00000000000000021b6d2a8dca8d96e6dfa28a826037521bb587d3cb435c44c90139e87a7a4fa164",
+			},
+			output{
+				true,
+				nil,
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			tree, in, out := tc.tree, tc.in, tc.out
+
+			proof, err := hex.DecodeString(in.proofHex)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ok, err := tree.VerifyMembershipProof(in.index, proof)
+			if err != out.err {
+				t.Errorf("expected: %v, actual: %v", out.err, err)
+			}
+			if err == nil {
+				if ok != out.ok {
+					t.Errorf("expected: %t, actual: %t", out.ok, ok)
+				}
+			}
+		})
+	}
+}

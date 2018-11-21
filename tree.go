@@ -188,11 +188,11 @@ func (tree *Tree) VerifyMembershipProof(index uint64, proof []byte) (bool, error
 	if index > tree.indexMax {
 		return false, ErrTooLargeLeafIndex
 	}
-	if (uint64(len(proof))-proofHeadSize)%tree.hashSize != 0 {
-		return false, ErrInvalidProofSize
-	}
 	if uint64(len(proof)) > tree.hashSize*tree.depth+proofHeadSize {
 		return false, ErrTooLargeProofSize
+	}
+	if (uint64(len(proof))-proofHeadSize)%tree.hashSize != 0 {
+		return false, ErrInvalidProofSize
 	}
 
 	proofIndex := proofHeadSize
