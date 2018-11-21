@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"bytes"
+	"encoding/binary"
 	"errors"
 	"hash"
 	"math/big"
@@ -137,4 +138,40 @@ func (tree *Tree) Root() []byte {
 		return root
 	}
 	return tree.defaultNodes[0]
+}
+
+func (tree *Tree) CreateMembershipProof(index uint64) ([]byte, error) {
+	if index > tree.indexMax {
+		return nil, ErrTooLargeLeafIndex
+	}
+
+	var proofHead uint64
+
+	proofHeadBytes := make([]byte, DepthMax/8)
+	buf := bytes.NewBuffer(proofHeadBytes)
+
+	for d := tree.depth; d > 0; d-- {
+		var siblingIndex uint64
+		if index%2 == 0 {
+			siblingIndex = index + 1
+		} else {
+			siblingIndex = index - 1
+		}
+
+		if siblingNode, ok := tree.levels[d][siblingIndex]; ok {
+			if _, err := buf.Write(siblingNode); err != nil {
+				return nil, err
+			}
+			proofHead += 1 << (tree.depth - d)
+		}
+
+		index /= 2
+	}
+
+	binary.BigEndian.PutUint64(proofHeadBytes, proofHead)
+
+	proof := buf.Bytes()
+	copy(proof[:DepthMax/8], proofHeadBytes)
+
+	return proof, nil
 }
