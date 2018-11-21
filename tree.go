@@ -15,6 +15,8 @@ const (
 var (
 	ErrTooLargeTreeDepth = errors.New("too large tree depth")
 	ErrTooLargeLeafIndex = errors.New("too large leaf index")
+	ErrTooLargeProofSize = errors.New("too large proof size")
+	ErrInvalidProofSize  = errors.New("invalid proof size")
 )
 
 type Tree struct {
@@ -174,4 +176,49 @@ func (tree *Tree) CreateMembershipProof(index uint64) ([]byte, error) {
 	copy(proof[:DepthMax/8], proofHeadBytes)
 
 	return proof, nil
+}
+
+func (tree *Tree) VerifyMembershipProof(index uint64, proof []byte) (bool, error) {
+	if index > tree.indexMax {
+		return false, ErrTooLargeLeafIndex
+	}
+	if (len(proof)-DepthMax/8)%tree.hasher.Size() != 0 {
+		return false, ErrInvalidProofSize
+	}
+	if uint64(len(proof)) > uint64(tree.hasher.Size())*tree.depth+DepthMax/8 {
+		return false, ErrTooLargeProofSize
+	}
+
+	proofIndex := DepthMax / 8
+	proofHead := binary.BigEndian.Uint64(proof[:proofIndex])
+
+	b, ok := tree.levels[tree.depth][index]
+	if !ok {
+		b = tree.defaultNodes[tree.depth]
+	}
+
+	for d := tree.depth; d > 0; d-- {
+		var siblingNode []byte
+		if proofHead&1 == 0 {
+			siblingNode = tree.defaultNodes[d]
+		} else {
+			siblingNode = proof[proofIndex : proofIndex+tree.hasher.Size()]
+			proofIndex += tree.hasher.Size()
+		}
+
+		var err error
+		if index%2 == 0 {
+			b, err = tree.pairHash(b, siblingNode)
+		} else {
+			b, err = tree.pairHash(siblingNode, b)
+		}
+		if err != nil {
+			return false, err
+		}
+
+		proofHead >>= 1
+		index /= 2
+	}
+
+	return bytes.Equal(b, tree.Root()), nil
 }
