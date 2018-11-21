@@ -77,13 +77,14 @@ func (tree *Tree) build(leaves map[uint64][]byte) error {
 				tree.levels[d-1][index/2] = parentNode
 
 			} else {
-				if _, ok := level[index-1]; !ok {
-					parentNode, err := tree.pairHash(tree.defaultNodes[d], node)
-					if err != nil {
-						return err
-					}
-					tree.levels[d-1][index/2] = parentNode
+				if _, ok := level[index-1]; ok {
+					continue
 				}
+				parentNode, err := tree.pairHash(tree.defaultNodes[d], node)
+				if err != nil {
+					return err
+				}
+				tree.levels[d-1][index/2] = parentNode
 			}
 		}
 	}
